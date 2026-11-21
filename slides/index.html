@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ZCode Work — ใช้ AI เป็นลูกน้องสำนักงาน</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@300;400;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0A1526; --bg2:#0F1F3A; --ink:#F2F5FA; --dim:#9FB0C8;
+  --gold:#D9B44A; --blue:#4A8FE2; --green:#3DBE8B; --red:#E25B5B;
+  --card:#132743; --line:#23406B;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;background:var(--bg);color:var(--ink);font-family:'IBM Plex Sans Thai',system-ui,sans-serif;overflow:hidden}
+#stage{position:fixed;inset:0;display:flex;align-items:center;justify-content:center}
+.deck{width:1920px;height:1080px;transform-origin:center center;position:relative}
+.slide{position:absolute;inset:0;display:none;flex-direction:column;padding:48px 120px;background:radial-gradient(1200px 800px at 75% 15%, #12233F 0%, var(--bg) 60%)}
+.slide.is-active{display:flex}
+/* type floors */
+h1{font-size:110px;font-weight:700;line-height:1.15}
+h2{font-size:76px;font-weight:700;line-height:1.2}
+h3{font-size:52px;font-weight:600;line-height:1.25}
+.statement{font-size:64px;font-weight:600;line-height:1.4}
+.body{font-size:46px;line-height:1.6;color:var(--ink)}
+.dim{color:var(--dim)}
+.caption{font-size:36px;color:var(--dim)}
+.gold{color:var(--gold)}.blue{color:var(--blue)}.green{color:var(--green)}.red{color:var(--red)}
+.mono{font-family:'JetBrains Mono',monospace}
+.kicker{font-size:36px;letter-spacing:.25em;text-transform:uppercase;color:var(--gold);font-weight:600;margin-bottom:28px}
+.toplabel{position:absolute;top:44px;right:120px;font-size:32px;color:var(--dim);letter-spacing:.15em}
+/* cover */
+.cover{justify-content:center}
+.cover h1{font-size:150px;line-height:1.05;background:linear-gradient(90deg,#fff,#FFD97A 70%);-webkit-background-clip:text;background-clip:text;color:transparent}
+.cover .sub{font-size:56px;color:var(--dim);margin-top:36px;font-weight:300}
+.cover .brand{margin-bottom:40px}
+/* divider */
+.divider{justify-content:center}
+.divider .num{font-size:220px;font-weight:700;color:var(--line);line-height:1;position:absolute;right:120px;bottom:60px}
+.divider .time{display:inline-block;align-self:flex-start;margin-top:44px;font-size:40px;color:var(--bg);background:var(--gold);padding:14px 44px;border-radius:60px;font-weight:600}
+/* cards */
+.cards{display:grid;gap:36px;margin-top:44px}
+.cards.c2{grid-template-columns:1fr 1fr}.cards.c3{grid-template-columns:1fr 1fr 1fr}
+.card{background:var(--card);border:2px solid var(--line);border-radius:28px;padding:34px 44px}
+.card .big{font-size:70px;margin-bottom:20px;display:block}
+.card h3{margin-bottom:16px}
+.card p{font-size:38px;line-height:1.5;color:var(--dim)}
+.card.hl{border-color:var(--gold);box-shadow:0 0 60px rgba(217,180,74,.15)}
+/* list rows */
+.rows{margin-top:40px;display:flex;flex-direction:column;gap:24px}
+.row{display:flex;align-items:flex-start;gap:36px;background:var(--card);border:2px solid var(--line);border-radius:24px;padding:28px 48px}
+.row .n{min-width:84px;height:84px;border-radius:20px;background:var(--gold);color:#0A1526;font-size:48px;font-weight:700;display:flex;align-items:center;justify-content:center}
+.row .n.b{background:var(--blue)}.row .n.g{background:var(--green)}.row .n.r{background:var(--red)}
+.row h3{font-size:44px;margin-bottom:6px}
+.row p{font-size:36px;color:var(--dim);line-height:1.45}
+/* tables */
+table{width:100%;border-collapse:collapse;margin-top:36px}
+th{font-size:38px;text-align:left;color:var(--gold);padding:22px 30px;border-bottom:3px solid var(--gold)}
+td{font-size:38px;padding:18px 30px;border-bottom:1px solid var(--line);line-height:1.45}
+td.dim{font-size:38px}
+/* code block */
+.code{background:#060D18;border:2px solid var(--line);border-radius:24px;padding:44px 52px;margin-top:56px;font-family:'JetBrains Mono',monospace;font-size:38px;line-height:1.7;color:#D7E3F5}
+.code .k{color:var(--gold)}.code .c{color:#5E7BA6}
+.prompt{background:#060D18;border:2px solid var(--green);border-radius:24px;padding:44px 52px;margin-top:56px;font-size:42px;line-height:1.7}
+.prompt::before{content:"PROMPT →";display:block;font-size:32px;color:var(--green);letter-spacing:.2em;margin-bottom:18px;font-family:'JetBrains Mono',monospace}
+.badge{display:inline-block;font-size:34px;padding:10px 30px;border-radius:40px;border:2px solid var(--line);color:var(--dim);margin-right:20px}
+.badge.on{border-color:var(--gold);color:var(--gold)}
+.flow{display:flex;align-items:stretch;gap:0;margin-top:48px}
+.flow .step{flex:1;background:var(--card);border:2px solid var(--line);border-radius:24px;padding:40px 30px;text-align:center}
+.flow .step h3{font-size:42px}.flow .step p{font-size:32px;color:var(--dim);margin-top:12px;line-height:1.4}
+.flow .arr{display:flex;align-items:center;font-size:60px;color:var(--gold);padding:0 24px}
+.slide.compact .rows{margin-top:26px;gap:14px}
+.slide.compact .row{padding:18px 44px}
+.slide.compact h2{font-size:72px}
+.slide.compact .row p{font-size:34px}
+.slide.compact .row .n{min-width:64px;height:64px;font-size:38px}
+/* footer chrome */
+#bar{position:fixed;left:0;top:0;height:8px;background:var(--gold);z-index:99;transition:width .2s}
+#count{position:fixed;right:36px;bottom:28px;font-size:28px;color:var(--dim);z-index:99;font-family:'JetBrains Mono',monospace}
+#hint{position:fixed;left:36px;bottom:28px;font-size:26px;color:#3A557F;z-index:99}
+.notes{display:none}
+@media print{
+  html,body{overflow:visible;background:#fff}
+  #stage{position:static;display:block}
+  .deck{width:auto;height:auto;transform:none!important}
+  .slide{display:flex!important;position:relative;page-break-after:always;width:1920px;height:1080px}
+  #bar,#count,#hint{display:none}
+}
+@page{size:1920px 1080px;margin:0}
+</style>
+</head>
+<body>
+<div id="bar"></div><div id="count"></div><div id="hint">← → เปลี่ยนสไลด์ · F เต็มจอ</div>
+<div id="stage"><div class="deck" id="deck">
+
+<!-- ═══ PART 0 · OPENING ═══ -->
+<section class="slide cover is-active">
+  <div class="kicker brand">YES! SCIENCE OF LEARNING AI TOOLS</div>
+  <h1>ZCode Work</h1>
+  <div class="sub">ใช้ AI เป็นลูกน้องสำนักงาน — ไม่ใช่แค่ chatbot<br>เวิร์กช็อปลงมือทำจริง 3 use case</div>
+  <div style="margin-top:70px"><span class="badge on">ประชุม+เวิร์กช็อป 2–3 ชม.</span><span class="badge">ไม่ต้องเขียนโค้ด</span><span class="badge">เอางานจริงมาลองได้</span></div>
+  <aside class="notes">เปิดด้วยคำถาม: "ใครเคยใช้ ChatGPT ตอบงาน?" ทุกมือยก → "วันนี้เราจะไม่ทำแบบนั้น เราจะจ้าง AI เป็นลูกน้องที่ลงมือทำงานจนเสร็จ ส่งไฟล์จริงมาให้" (5 นาที)</aside>
+</section>
+
+<section class="slide compact">
+  <div class="toplabel">เส้นทางวันนี้</div>
+  <h2>วันนี้เราจะไปไหนบ้าง</h2>
+  <div class="rows">
+    <div class="row"><div class="n">1</div><div><h3>ยุคของ automation agent</h3><p>จาก chatbot พูดจา สู่ AI ที่ลงมือทำ — เรื่องเล่าตระกูล Claw (30 นาที)</p></div></div>
+    <div class="row"><div class="n b">2</div><div><h3>ZCode และ vibe coding</h3><p>harness คืออะไร ทำไม coding tool ทำงานแบบเดียวกับ agent (30 นาที)</p></div></div>
+    <div class="row"><div class="n g">3</div><div><h3>Work mode — จ้าง AI เป็นลูกน้อง</h3><p>วงจรงาน cowork · วิธีเขียนโจทย์ที่ AI ทำถูก (30 นาที)</p></div></div>
+    <div class="row"><div class="n r">4</div><div><h3>เวิร์กช็อปลงมือทำ 3 use case</h3><p>Excel 30 สาขา · เทียบสัญญา · ค้นโฟลเดอร์ 104 ไฟล์ (60 นาที)</p></div></div>
+    <div class="row"><div class="n">5</div><div><h3>สรุป + การบ้าน</h3><p>เจตคติใช้ AI ให้ได้งานจริง (15 นาที)</p></div></div>
+  </div>
+  <aside class="notes">ไล่ agenda สั้น ๆ ย้ำว่าชั่วโมงที่ 2 ทั้งหมดคือลงมือทำ ไม่ใช่ฟัง (3 นาที)</aside>
+</section>
+
+<!-- ═══ PART 1 ═══ -->
+<section class="slide divider">
+  <div class="kicker">PART 1</div>
+  <h1>ยุคของ<br>automation agent</h1>
+  <div class="time">~30 นาที</div>
+  <div class="num">01</div>
+  <aside class="notes">ทรานสิชัน: "ก่อนจะรู้จัก ZCode ต้องเข้าใจก่อนว่าโลก AI เปลี่ยนจาก 'พูดคุย' เป็น 'ลงมือทำ' ตอนไหน" (1 นาที)</aside>
+</section>
+
+<section class="slide">
+  <h2>Chatbot ตอบคำถาม<br>Agent <span class="gold">ลงมือทำงาน</span></h2>
+  <div class="cards c2">
+    <div class="card">
+      <h3 class="blue">Chatbot (ที่คุณคุ้น)</h3>
+      <p>คุณถาม → มันตอบเป็นข้อความ<br><br>งานยังอยู่ในมือคุณ: ต้องก๊อปไปวาง ต้องเปิดโปรแกรมเอง ต้องตรวจเอง</p>
+    </div>
+    <div class="card hl">
+      <h3 class="gold">Agent (วันนี้)</h3>
+      <p>คุณสั่งงาน → มัน<b style="color:#fff">เปิดเว็บเอง อ่านไฟล์เอง เขียนไฟล์เอง</b><br><br>คุณได้รับ "ผลงานเสร็จ" ไม่ใช่คำตอบ</p>
+    </div>
+  </div>
+  <aside class="notes">ยกตัวอย่างเทียบ: "สรุปวิธีทำ dashboard" (chat) vs "สร้าง dashboard จากไฟล์ Excel นี้แล้วส่งไฟล์ให้ผม" (agent) (5 นาที)</aside>
+</section>
+
+<section class="slide">
+  <div class="toplabel">PART 1 · ตระกูล Claw</div>
+  <h2>AutoClaw ทำอะไรได้บ้าง</h2>
+  <div class="rows">
+    <div class="row"><div class="n">🖥️</div><div><h3>ใช้คอมพิวเตอร์แทนคุณ</h3><p>เปิดเว็บ คลิก พิมพ์ กรอกฟอร์ม สั่งซื้อ จอง — เหมือนมีคนนั่งใช้คอมให้</p></div></div>
+    <div class="row"><div class="n b">📄</div><div><h3>ทำงานเอกสารต่อเนื่อง</h3><p>อ่านหลายไฟล์ รวบรวม สรุป ส่งอีเมล — งานยาวหลายขั้นตอนจนจบ</p></div></div>
+    <div class="row"><div class="n g">⏰</div><div><h3>ทำงานตามเวลา (scheduled)</h3><p>เช้านี้มีรายงานรออยู่แล้ว — ตั้งให้ agent ทำงานเองตอนตี 4</p></div></div>
+  </div>
+  <aside class="notes">เชื่อมเรื่องเล่า: ตระกูล Claw ทำให้โลกเห็นว่า AI ใช้คอมพิวเตอร์แบบมนุษย์ได้จริง (7 นาที)</aside>
+</section>
+
+<section class="slide">
+  <h2>สูตรลับเบื้องหลัง: <span class="gold">3 อวัยวะ</span></h2>
+  <div class="cards c3">
+    <div class="card"><span class="big">🧠</span><h3>สมอง</h3><p>โมเดล AI — คิดแผน ตัดสินใจ เข้าใจภาษาที่คุณพิมพ์</p></div>
+    <div class="card"><span class="big">✋</span><h3>มือ</h3><p>เครื่องมือ (tools) — รันคำสั่ง แก้ไฟล์ เขียนไฟล์ ย้ายข้อมูล</p></div>
+    <div class="card"><span class="big">👁️</span><h3>ตา</h3><p>หน้าจอ/browser — เห็นผลลัพธ์จริง ตรวจงานตัวเอง แก้ซ้ำ</p></div>
+  </div>
+  <div class="statement" style="margin-top:70px">จำ 3 อันนี้ไว้ — <span class="gold">ZCode ก็มีครบทั้ง 3</span></div>
+  <aside class="notes">นี่คือแนวคิดหลักของทั้งคอร์ส: อวัยวะ 3 อย่างเดียวกัน ทั้ง AutoClaw และ ZCode — ต่างแค่ "เกิดมาเพื่ออะไร" (5 นาที)</aside>
+</section>
+
+<section class="slide">
+  <h2>แล้ว automation agent ขาดอะไร?</h2>
+  <div class="cards c2">
+    <div class="card">
+      <h3>งานที่ต้อง<span class="red">แม่นยำสูง</span></h3>
+      <p>สูตร Excel ซับซ้อน · โค้ดโปรแกรม · คำนวณงบ — ต้องการเครื่องมือที่ "เข้าใจโครงสร้าง" ไม่ใช่แค่กดคลิกแทน</p>
+    </div>
+    <div class="card">
+      <h3>งานที่ต้อง<span class="red">ตรวจสอบย้อนหลัง</span></h3>
+      <p>ทำแล้วต้องดูได้ว่าทำอะไรไปบ้าง แก้ตรงไหน — งานออฟฟิศจริงต้องมี receipt ไม่ใช่แค่ "เสร็จแล้วนะ"</p>
+    </div>
+  </div>
+  <div class="statement" style="margin-top:60px">งานพวกนี้ต้องมีเครื่องมืออีกแบบ → <span class="gold">coding harness</span></div>
+  <aside class="notes">สร้างความต้องการรู้ก่อนเข้า ZCode — ไม่ใช่ ZCode เก่งกว่า claw ทุกด้าน แต่เก่งต่างทาง (4 นาที)</aside>
+</section>
+
+<!-- ═══ PART 2 ═══ -->
+<section class="slide divider">
+  <div class="kicker">PART 2</div>
+  <h1>ZCode<br>และ vibe coding</h1>
+  <div class="time">~30 นาที</div>
+  <div class="num">02</div>
+  <aside class="notes">ทรานสิชัน: "ZCode เกิดมาเพื่อนักเขียนโค้ด แต่วันนี้เราจะเห็นว่ามันเป็นลูกน้องออฟฟิศได้ด้วย" (1 นาที)</aside>
+</section>
+
+<section class="slide">
+  <h2>ZCode คืออะไร</h2>
+  <div class="statement" style="margin-top:40px">Coding harness ของ <span class="gold">Z.ai</span> —<br>ตัวกลางที่ทำให้โมเดล AI <span class="gold">ลงมือทำงานในเครื่องคุณได้จริง</span></div>
+  <div class="rows" style="margin-top:60px">
+    <div class="row"><div class="n b">🧠</div><div><h3>สมอง = โมเดล GLM</h3><p>เข้าใจภาษาไทยที่คุณพิมพ์ เข้าใจไฟล์งานของคุณ</p></div></div>
+    <div class="row"><div class="n g">✋</div><div><h3>มือ = terminal + ไฟล์ทุกไฟล์ในโฟลเดอร์</h3><p>สร้าง/แก้ Excel, Word, PDF, โค้ด — และรันสคริปต์ตรวจสอบได้</p></div></div>
+    <div class="row"><div class="n r">👁️</div><div><h3>ตา = เห็นผลลัพธ์และตรวจเองได้</h3><p>รันแล้วดูผล ผิดแก้ แก้แล้วรันซ้ำ — จนได้ของจริง</p></div></div>
+  </div>
+  <aside class="notes">ชี้ให้เห็นว่า 3 อวัยวะเดียวกับ AutoClaw — ต่างที่ "มือ" ของ ZCode คือเครื่องมือระดับ developer: terminal, ไฟล์ระบบ, รันโค้ด (5 นาที)</aside>
+</section>
+
+<section class="slide">
+  <h2>Vibe coding = <span class="gold">วงจร 4 จังหวะ</span></h2>
+  <div class="flow">
+    <div class="step"><h3>1 · โจทย์</h3><p>พูดภาษาคน<br>ไม่ต้องเขียนโค้ด</p></div><div class="arr">→</div>
+    <div class="step"><h3>2 · แผน</h3><p>AI เสนอวิธีทำ<br>คุณตรวจก่อน</p></div><div class="arr">→</div>
+    <div class="step"><h3>3 · ลงมือ</h3><p>AI เขียน/ทำ<br>จริงทั้งหมด</p></div><div class="arr">→</div>
+    <div class="step"><h3>4 · ตรวจ</h3><p>ทดสอบจริง<br>ผิด = วนแก้</p></div>
+  </div>
+  <div class="statement" style="margin-top:70px">คุณไม่ได้เขียนโค้ด — คุณ<span class="gold">เป็นคนสั่งและคนตรวจ</span></div>
+  <aside class="notes">ย้ำจังหวะ 4 ขั้น เพราะ work mode ใช้วงจรเดียวกันนี้แต่ทำงานออฟฟิศ — ให้ผู้เรียนจำ flow นี้ให้ขึ้นใจ (6 นาที)</aside>
+</section>
+
+<section class="slide">
+  <h2>โจทย์แบบไหน AI ทำ<span class="gold">ถูก</span> · แบบไหนทำ<span class="red">พัง</span></h2>
+  <div class="cards c2">
+    <div class="card" style="border-color:var(--red)">
+      <h3 class="red">✗ โจทย์คลุมเครื่อ</h3>
+      <p style="color:#E8D9D9">"ช่วยทำรายงานขายให้หน่อย"<br><br>AI ต้องเดา: ไฟล์ไหน? ห้วงไหน? อยากได้กราฟไหน? ส่งรูปแบบอะไร? — เดาผิดทีละชั้น</p>
+    </div>
+    <div class="card hl">
+      <h3 class="gold">✓ โจทย์ที่มีอวัยวะครบ</h3>
+      <p>"รวมไฟล์ในโฟลเดอร์ branches ทั้ง 30 ไฟล์ เป็น master file เดียว ถ้าไฟล์ไหนข้อมูลว่าง/ซ้ำ ให้รายงานแยก อย่าเดาค่าที่ขาด ส่งเป็น Excel + รายงานปัญหา"</p>
+    </div>
+  </div>
+  <aside class="notes">ให้ผู้เรียนช่วยกันเติมโจทย์ฝั่งซ้ายให้ดีขึ้นสด ๆ — เตรียมเข้าสู่หลัก 4 องค์ประกอบใน Part 3 (6 นาที)</aside>
+</section>
+
+<section class="slide">
+  <h2>เมื่อไหร่ใช้ตัวไหน?</h2>
+  <table>
+    <tr><th>สถานการณ์</th><th>เครื่องมือที่เหมาะ</th><th>เพราะอะไร</th></tr>
+    <tr><td>สั่งซื้อ จอง กรอกเว็บ ไล่โซเชียล</td><td class="gold">automation agent (ตระกูล Claw)</td><td class="dim">เก่งเรื่องหน้าจอ/เว็บ มี browser ในตัว</td></tr>
+    <tr><td>งานไฟล์หนัก Excel/Word/PDF หลายไฟล์</td><td class="gold">ZCode work mode</td><td class="dim">มือจับไฟล์ได้ทุกแบบ + รันตรวจสอบได้</td></tr>
+    <tr><td>ต้องการของที่ใช้ซ้ำได้ (สคริปต์/รายงานอัตโนมัติ)</td><td class="gold">ZCode (vibe coding)</td><td class="dim">ทำครั้งเดียวได้เครื่องมือที่รันซ้ำได้ตลอด</td></tr>
+    <tr><td>ถามความรู้ ร่างข้อความ ไอเดีย</td><td class="gold">chatbot ธรรมดาก็พอ</td><td class="dim">ไม่ต้องลงมือทำ — chat ถูกแล้ว</td></tr>
+  </table>
+  <aside class="notes">หัวใจของคอร์ส: ไม่ใช่ "อันไหนดีกว่า" แต่คือ "งานไหนเหมาะอันไหน" — ZCode เด่นตรงไฟล์และความแม่นยำ (6 นาที)</aside>
+</section>
+
+<section class="slide">
+  <h2>จุดต่างที่สำคัญที่สุด: <span class="gold">Artifact</span></h2>
+  <div class="statement" style="margin-top:36px">Chatbot ให้ <span class="dim">คำตอบ</span><br>Work mode ให้ <span class="gold">ผลงานที่จับต้องได้</span></div>
+  <div class="rows" style="margin-top:60px">
+    <div class="row"><div class="n g">📦</div><div><h3>ไฟล์จริงที่เปิดใช้ได้</h3><p>Excel รวมแล้ว · สัญญาเทียบแล้ว · dashboard · โค้ด — รับมาใช้งานได้ทันที</p></div></div>
+    <div class="row"><div class="n b">🔁</div><div><h3>แก้ต่อได้ (iteration)</h3><p>ไม่ชอบจุดไหน สั่งแก้ต่อจากของเดิม — ไม่ใช่เริ่มพิมพ์ใหม่ทุกครั้ง</p></div></div>
+  </div>
+  <aside class="notes">artifact คือคำศัพท์ที่จะใช้ทั้งวัน — ผลงานที่จับต้องได้ (3 นาที)</aside>
+</section>
+
+<!-- ═══ PART 3 ═══ -->
+<section class="slide divider">
+  <div class="kicker">PART 3</div>
+  <h1>Work mode<br>จ้าง AI เป็นลูกน้อง</h1>
+  <div class="time">~30 นาที</div>
+  <div class="num">03</div>
+  <aside class="notes">(1 นาที) — จากนี้คือหัวใจ: วิธีสั่งงานให้ AI ทำถูกครั้งแรก</aside>
+</section>
+
+<section class="slide">
+  <h2>Work mode: เปลี่ยนบทบาทของคุณ</h2>
+  <div class="cards c2">
+    <div class="card">
+      <h3 class="dim">ก่อนหน้านี้ — คุณคือคนทำ</h3>
+      <p>เปิดไฟล์ → ตรวจ → ก๊อปวาง → สรุป → จัดรูปแบบ → ส่ง<br><br><b style="color:#fff">ทุกขั้นตอนมือเปล่า</b></p>
+    </div>
+    <div class="card hl">
+      <h3 class="gold">Work mode — คุณคือหัวหน้า</h3>
+      <p>เขียนโจทย์ชัด → AI เสนอแผน → อนุมัติ → AI ทำ → <b style="color:#fff">คุณตรวจของ</b><br><br>งานของคุณเหลือแค่ <b style="color:#fff">สั่ง + ตรวจ</b></p>
+    </div>
+  </div>
+  <div class="statement" style="margin-top:56px">หัวหน้าที่ดีไม่ได้ทำงานแทนลูกน้อง — <span class="gold">แต่สั่งให้ชัดและตรวจให้เป๊ะ</span></div>
+  <aside class="notes">อารมณ์ขัน: หัวหน้าเก่าที่สั่ง "ทำรายงานหน่อย" แล้วโกรธเมื่อได้ของไม่ตรง = คุณกับ chatbot วันนี้เราเลิกเป็นหัวหน้าแบบนั้น (5 นาที)</aside>
+</section>
+
+<section class="slide">
+  <h2>วงจรงาน cowork — <span class="gold">5 จังหวะ</span></h2>
+  <div class="flow">
+    <div class="step"><h3>โจทย์</h3><p>บอกเป้าหมาย<br>+ นิยามเสร็จ</p></div><div class="arr">→</div>
+    <div class="step"><h3>แผน</h3><p>AI สรุปว่า<br>จะทำขั้นไหนบ้าง</p></div><div class="arr">→</div>
+    <div class="step"><h3>อนุมัติ</h3><p>คุณเช็คแผน<br>แก้ก่อนลงมือ</p></div><div class="arr">→</div>
+    <div class="step"><h3>ลงมือ</h3><p>AI ทำจริง<br>สร้างไฟล์จริง</p></div><div class="arr">→</div>
+    <div class="step"><h3>ตรวจของ</h3><p>คุณดูผลงาน<br>สั่งแก้ถ้าไม่โอเค</p></div>
+  </div>
+  <div class="statement" style="margin-top:66px">ขั้นที่คนข้ามบ่อยที่สุดคือ <span class="red">อนุมัติแผน</span> — ข้ามเมื่อไหร่ เสียเวลาแก้ 10 เท่า</div>
+  <aside class="notes">เทียบกับ flow vibe coding (4 จังหวะ) — เพิ่ม "อนุมัติแผน" และเปลี่ยน "ตรวจ" เป็น "ตรวจของ(artifact)" (6 นาที)</aside>
+</section>
+
+<section class="slide">
+  <h2>โจทย์ที่ดีมี <span class="gold">4 องค์ประกอบ</span></h2>
+  <div class="rows">
+    <div class="row"><div class="n">1</div><div><h3>บริบท — ของอยู่ไหน ทำอะไร</h3><p>"ไฟล์อยู่โฟลเดอร์ branches ทั้งหมด 30 ไฟล์ เป็นรายงานยอดขายเดือน ต.ค."</p></div></div>
+    <div class="row"><div class="n b">2</div><div><h3>เป้าหมาย — อยากได้อะไรกลับมา</h3><p>"ได้ master file ไฟล์เดียว 30 แถว + กราฟเทียบรายภาค"</p></div></div>
+    <div class="row"><div class="n g">3</div><div><h3>นิยามคำว่า "เสร็จ"</h3><p>"ทุกแถวต้องมีครบ 9 คอลัมน์ ชนิดข้อมูลถูก รวมยอดตรงกับสาขา"</p></div></div>
+    <div class="row"><div class="n r">4</div><div><h3>ข้อห้าม — สิ่งที่ AI ทำไม่ได้</h3><p>"ห้ามเดาค่าที่ขาด ห้ามลบข้อมูล ถ้าไม่แน่ใจให้แจ้งออกมาในรายงาน"</p></div></div>
+  </div>
+  <aside class="notes">องค์ประกอบ 4 ข้อนี้คือ template ที่ผู้เรียนใช้ใน workshop — ให้จดหรือถ่ายรูปสไลด์นี้ (8 นาที)</aside>
+</section>
+
+<section class="slide">
+  <h2>ข้อควรระวัง <span class="red">3 ข้อ</span> ของหัวหน้ามือใหม่</h2>
+  <div class="rows">
+    <div class="row"><div class="n r">⚠</div><div><h3>AI ไม่รู้บริษัทคุณ — เว้นแต่คุณบอก</h3><p>มันจะเดาความหมายคอลัมน์/คำย่อ/นโยบายภายใน ถ้าคุณไม่อธิบาย — เดาแล้วมั่วเป็นเรื่องปกติ</p></div></div>
+    <div class="row"><div class="n r">⚠</div><div><h3>"เสร็จแล้วนะ" ≠ เสร็จถูก</h3><p>ต้องตรวจของทุกครั้ง — เปิดไฟล์ เทียบตัวเลข ลองใช้จริง ก่อนส่งต่อใคร</p></div></div>
+    <div class="row"><div class="n r">⚠</div><div><h3>ข้อมูลลับของบริษัท — รู้ก่อนใส่</h3><p>ข้อมูลลูกค้าจริง ราคาตั้งต้น สัญญาที่ยังไม่ประกาศ — ถามนโยบายบริษัทก่อนส่งเข้า AI เสมอ</p></div></div>
+  </div>
+  <aside class="notes">ยิ่งองค์กรมีกฎเรื่องข้อมูล ยิ่งต้องพูดข้อ 3 ยาว — เชื่อมกับ use case 3 ที่ AI ต้องรู้จักบอก "เอกสารนี้ยังไม่ official" (6 นาที)</aside>
+</section>
+
+<!-- ═══ PART 4 ═══ -->
+<section class="slide divider">
+  <div class="kicker">PART 4 · ลงมือทำ</div>
+  <h1>เวิร์กช็อป<br>3 use case จริง</h1>
+  <div class="time">~60 นาที</div>
+  <div class="num">04</div>
+  <aside class="notes">แจก repo / ให้ดาวน์โหลด zip: github.com/Poom5741/zcode-cowork-demo — ทุกคนทำพร้อมกัน ผู้สอนเดโมบนจอก่อนทุก use case (3 นาที)</aside>
+</section>
+
+<section class="slide">
+  <h2>ชุดข้อมูลฝึก: <span class="mono gold" style="font-size:64px">zcode-cowork-demo</span></h2>
+  <div class="rows">
+    <div class="row"><div class="n">1</div><div><h3>Excel Consolidation</h3><p>รายงานยอดขาย 30 สาขา — มีข้อผิดพลาดของมนุษย์แท้ซุกซ่อน 5 จุด ⭐⭐</p></div></div>
+    <div class="row"><div class="n b">2</div><div><h3>Contract Diff</h3><p>สัญญาจ้าง 2 ร่าง — "แก้เล็กน้อย" ที่ซ่อน 4 จุดเปลี่ยนแปลง ⭐⭐⭐</p></div></div>
+    <div class="row"><div class="n g">3</div><div><h3>Folder Search</h3><p>โฟลเดอร์ 104 ไฟล์ — หานโยบายจริงท่ามกลางเอกสารที่ขัดแย้งกันเอง ⭐⭐⭐⭐</p></div></div>
+  </div>
+  <div class="statement" style="margin-top:56px">ทุก use case มี prompt สำเร็จรูปใน README<br>เฉลยอยู่ใน <span class="mono gold">answer/</span> — <span class="red">ห้ามเปิดก่อนลองเอง!</span></div>
+  <aside class="notes">แจกลิงก์ repo / zip ให้ผู้เรียนทุกคน ให้เปิดโฟลเดอร์ usecase-1 ใน ZCode พร้อมกัน (4 นาที)</aside>
+</section>
+
+<section class="slide">
+  <div class="toplabel">USE CASE 1 · ⭐⭐</div>
+  <h2>รวมรายงานยอดขาย 30 สาขา</h2>
+  <div class="prompt">ในโฟลเดอร์ branches มีรายงานยอดขายเดือน ตุลาคม 2568 ของสาขา 30 แห่ง
+ช่วยรวมเป็น master file ไฟล์เดียว แล้วรายงานด้วยว่า:
+1. ไฟล์ไหนมีปัญหาอะไร (ข้อมูลว่าง/ซ้ำ/ชนิดผิด/ผิดเดือน) พร้อมวิธีรับมือ
+2. สรุปยอดขายรวมรายภาค พร้อมกราฟเทียบ
+ห้ามเดาค่าที่ขาด ให้ mark เป็น missing และระบุในรายงาน</div>
+  <div class="statement" style="margin-top:50px;font-size:52px">สังเกต: องค์ประกอบ 4 ข้ออยู่ครบ — <span class="gold">บริบท · เป้าหมาย · นิยามเสร็จ · ข้อห้าม</span></div>
+  <aside class="notes">ผู้สอนรันสด ~3 นาที — ชี้ให้เห็น AI เสนอแผนก่อนลงมือ (จังหวะอนุมัติ) แล้วปล่อยให้ผู้เรียนทำตาม 8 นาที</aside>
+</section>
+
+<section class="slide">
+  <div class="toplabel">USE CASE 1 · เฉลยคุยหลังทำ</div>
+  <h2>ข้อผิดพลาด 5 จุดที่ซ่อนอยู่</h2>
+  <table>
+    <tr><th>ไฟล์</th><th>ปัญหา</th><th>AI ที่ดีต้องทำ</th></tr>
+    <tr><td class="mono">SC07</td><td>ยอดออนไลน์<b>ว่าง</b> (ลืมกรอก)</td><td class="dim">mark missing + แจ้งเตือน — <b style="color:#fff">ไม่ใช่นับเป็น 0</b></td></tr>
+    <tr><td class="mono">SC14</td><td>ยื่นแบบฟอร์ม<b>เดือน ก.ย.</b></td><td class="dim">แยกออก + แจ้งให้ส่งใหม่</td></tr>
+    <tr><td class="mono">SC22</td><td>ตัวเลขเป็น<b>ข้อความ</b> "1,234,567 บาท"</td><td class="dim">parse เป็นเลข + ตรวจชนิดข้อมูล</td></tr>
+    <tr><td class="mono">SC26</td><td>แถว<b>ซ้ำ 2 แถว</b></td><td class="dim">dedupe ก่อนรวม</td></tr>
+    <tr><td class="mono">SC29</td><td>รหัสพิมพ์ <b>"sC29"</b> ตัวเล็ก</td><td class="dim">normalize รหัส</td></tr>
+  </table>
+  <aside class="notes">ถามผู้เรียน: "AI ของใครจับได้กี่จุด?" — คนที่ได้ 5/5 มักใส่ข้อห้าม "อย่าเดา" ครบ — เชื่อมกลับองค์ประกอบ 4 ข้อ (8 นาที)</aside>
+</section>
+
+<section class="slide">
+  <div class="toplabel">USE CASE 2 · ⭐⭐⭐</div>
+  <h2>เทียบสัญญา "แก้เล็กน้อย"</h2>
+  <div class="prompt">ผมมีสัญญาจ้างพัฒนาระบบ 2 ร่าง ผู้รับจ้างบอกว่า "แก้เล็กน้อย" แต่ผมไม่เชื่อ
+เทียบทั้ง 2 ไฟล์ทีละข้อ แล้วสร้างตาราง: ข้อไหนถูกแก้ · เดิมว่าอะไร → แก้เป็นอะไร
+· ผลกระทบต่อฝ่ายผู้ว่าจ้าง (เชิงเงินและความเสี่ยง)
+ระวังคำสะกดคล้ายกัน — จับการเปลี่ยนของตัวเลขและเงื่อนไขเป็นหลัก
+สรุปท้าย: ถ้าต้องเซ็นร่าง 2 ควรต่อรองข้อไหนก่อน เพราะอะไร</div>
+  <div class="statement" style="margin-top:50px;font-size:52px">คำถามก่อนรัน: <span class="gold">ถ้าเป็นคุณ จะอ่านสัญญา 2 ฉบับทีละข้อเองไหม?</span></div>
+  <aside class="notes">เดโมสด ~3 นาที — จุดขาย: คนส่วนใหญ่ไม่เคยเทียบสัญญาจริง ๆ แล้วเซ็น (3 นาที แล้วปล่อยทำ 10 นาที)</aside>
+</section>
+
+<section class="slide">
+  <div class="toplabel">USE CASE 2 · เฉลยคุยหลังทำ</div>
+  <h2>"แก้เล็กน้อย" = เปลี่ยน <span class="red">4 จุด</span> ที่เสียหายลูกค้า</h2>
+  <table>
+    <tr><th>ข้อ</th><th>ร่าง 1 → ร่าง 2</th><th>ผลกระทบ</th></tr>
+    <tr><td>ข้อ 2 มัดจำ</td><td><b class="red">30% → 50%</b> · ปลายทาง 30% → 20%</td><td class="dim">จ่ายก่อนเพิ่ม 200,000 บาท แบกความเสี่ยงงานไม่เสร็จ</td></tr>
+    <tr><td>ข้อ 3 ส่งมอบ</td><td><b class="red">90 → 60 วัน</b></td><td class="dim">เวลาลด ⅓ โอกาสโดนค่าปรับสูงขึ้น</td></tr>
+    <tr><td>ข้อ 4 ค่าปรับ</td><td><b class="red">0.1% → 0.5%/วัน</b> เพดาน 10% → 20%</td><td class="dim">ค่าปรับโต 5 เท่า เพดานเท่าตัว</td></tr>
+    <tr><td>ข้อ 5 รับประกัน</td><td><b class="red">12 → 6 เดือน</b> + แก้เฉพาะ "รุนแรง"</td><td class="dim">คุ้มครึ่งเดียว บั๊กเล็กไม่แก้ให้ฟรี</td></tr>
+  </table>
+  <div class="statement" style="margin-top:44px;font-size:48px">และ "เปอร์เซ็นต์ vs เปร์เซ็นต์" คือกับดักคำสะกด — <span class="gold">AI ที่ดีจับตัวเลข ไม่จับคำสะกด</span></div>
+  <aside class="notes">คุยว่า AI ของใครหลงกับดักคำสะกดบ้าง — เชื่อม concept "AI ต้องแยกสาระจากผิว" (6 นาที)</aside>
+</section>
+
+<section class="slide">
+  <div class="toplabel">USE CASE 3 · ⭐⭐⭐⭐ · ปิดท้าย</div>
+  <h2>หานโยบายค่าคอมมิชชั่นใน 104 ไฟล์</h2>
+  <div class="prompt">ในโฟลเดอร์ company-files คือเอกสารบริษัท 104 ไฟล์
+หน่อยถามว่า: บริษัทจ่ายค่าคอมมิชชั่นพนักงานขายยังไง อัตราปัจจุบันเท่าไหร่
+ข้อกำหนด: อ้างอิงจากไฟล์จริง (ระบุชื่อไฟล์) · ถ้าเอกสารขัดแย้งกัน
+ให้ชี้ความขัดแย้งและบอกว่าอันไหนใช้ได้ · ห้ามหยิบเรื่องที่ไม่เกี่ยวมาปน</div>
+  <div class="statement" style="margin-top:50px;font-size:52px">ท้าทายสุดของวัน — เพราะเอกสารในโฟลเดอร์นี้ <span class="red">ขัดแย้งกันเอง</span></div>
+  <aside class="notes">ให้ผู้เรียนทำก่อน 10 นาที แล้วค่อยเดโม/คุยเฉลย — อย่าเฉลยก่อนให้ลอง! (2 นาที)</aside>
+</section>
+
+<section class="slide">
+  <div class="toplabel">USE CASE 3 · เฉลยคุยหลังทำ</div>
+  <h2>3 เข็มใน 104 ไฟล์ + 1 กับดัก</h2>
+  <div class="rows">
+    <div class="row"><div class="n">1</div><div><h3>นโยบาย ปี 2567</h3><p>หน้าร้าน 1.0% / ออนไลน์ 3.0% — <b class="red">แต่ล้าสมัยแล้ว</b></p></div></div>
+    <div class="row"><div class="n b">2</div><div><h3>มติประชุม ปี 2568</h3><p>ปรับออนไลน์ 3.5% + คอมพิเศษ +0.5% — <b class="gold">ใหม่กว่า แต่ยังรอประกาศเป็นทางการ</b></p></div></div>
+    <div class="row"><div class="n g">3</div><div><h3>ตารางจ่ายจริง ไตรมาส 3/2568</h3><p>ตัวเลขจ่ายจริง — ยืนยันอัตราใหม่ใช้แล้วในทางปฏิบัติ</p></div></div>
+    <div class="row"><div class="n r">✗</div><div><h3>กับดัก: สัญญาเอเจนซี่</h3><p>พูดถึง "คอมมิชชั่นแอฟฟิลิเอต 8%" — <b style="color:#fff">ไม่ใช่ค่าคอมพนักงานขาย</b> AI ที่หยิบมาตอบ = ตอบผิดเรื่อง</p></div></div>
+  </div>
+  <aside class="notes">ถาม: "AI ของใครตอบว่า 3.0% ไหม? — นั่นคือตอบตามเอกสารตาย ไม่ใช่ความจริงปัจจุบัน" (8 นาที)</aside>
+</section>
+
+<section class="slide">
+  <h2>เกณฑ์ตัดสิน AI ลูกน้องที่ดี</h2>
+  <div class="rows">
+    <div class="row"><div class="n">✓</div><div><h3>ส่งของเป็น artifact จริง</h3><p>ไฟล์ที่เปิดใช้ได้ ไม่ใช่คำบรรยายว่า "ควรจะทำแบบนี้"</p></div></div>
+    <div class="row"><div class="n b">✓</div><div><h3>จับข้อผิดพลาดแบบมนุษย์ได้</h3><p>ข้อมูลว่าง ซ้ำ ผิดเดือน — และ<b style="color:#fff">ไม่เดาแทนค่าที่ขาด</b></p></div></div>
+    <div class="row"><div class="n g">✓</div><div><h3>แยกสาระออกจากผิว</h3><p>คำสะกดไม่ใช่สาระ · ตัวเลขและเงื่อนไขคือสาระ</p></div></div>
+    <div class="row"><div class="n r">✓</div><div><h3>กล้าชี้ความขัดแย้ง</h3><p>"เอกสารสองอันต่างกัน อันนี้ใหม่กว่า อันนั้นยังไม่ official" — นี่คือคุณค่าสูงสุด</p></div></div>
+  </div>
+  <aside class="notes">ใช้ 4 ข้อนี้ให้คะแนนงานผู้เรียน หรือใช้เป็น checklist ตรวจงาน AI ในอนาคต (5 นาที)</aside>
+</section>
+
+<!-- ═══ PART 5 ═══ -->
+<section class="slide divider">
+  <div class="kicker">PART 5</div>
+  <h1>สรุป<br>และก้าวต่อไป</h1>
+  <div class="time">~15 นาที</div>
+  <div class="num">05</div>
+  <aside class="notes">(1 นาที)</aside>
+</section>
+
+<section class="slide">
+  <h2>ประโยคที่อยากให้จำ<br>กลับบ้าน</h2>
+  <div class="statement" style="margin-top:60px;font-size:72px">AI ลูกน้องที่ใช้ได้จริง ไม่ใช่แค่<br><span class="gold">ค้นเก่ง</span> — แต่ต้อง<span class="gold">รู้ว่าเอกสารขัดแย้งกัน</span><br>และ<span class="gold">กล้าบอกว่า "อันนี้ยังไม่ official"</span></div>
+  <div class="caption" style="margin-top:60px">และคุณ — หัวหน้าที่ดี — ต้องสั่งให้ชัด (บริบท·เป้าหมาย·นิยามเสร็จ·ข้อห้าม) และตรวจของทุกครั้ง</div>
+  <aside class="notes">สไลด์นี้คือ takeaway เดียวที่อยากให้จำ — ถ่ายรูปสไลด์นี้พอ (4 นาที)</aside>
+</section>
+
+<section class="slide">
+  <h2>การบ้าน — เริ่มจากงานของคุณเอง</h2>
+  <div class="rows">
+    <div class="row"><div class="n">1</div><div><h3>เลือกงานซ้ำ ๆ ที่ใช้เวลาเกิน 30 นาที/สัปดาห์</h3><p>งานไฟล์ งานรวมข้อมูล งานเทียบเอกสาร — อย่าเลือกงานที่ต้องใช้ดุลยพินิจสูง</p></div></div>
+    <div class="row"><div class="n b">2</div><div><h3>เขียนโจทย์ด้วยองค์ประกอบ 4 ข้อ</h3><p>บริบท · เป้าหมาย · นิยามเสร็จ · ข้อห้าม — เขียนก่อนเปิด AI</p></div></div>
+    <div class="row"><div class="n g">3</div><div><h3>ทำ 3 รอบ แล้วจับเวลาเทียบวิธีเก่า</h3><p>รอบแรกแก้โจทย์ รอบสองปรับ output รอบสามมันจะเริ่มเร็วเอง</p></div></div>
+  </div>
+  <div class="statement" style="margin-top:56px">สัปดาห์หน้ามาแชร์: <span class="gold">งานอะไร · ใช้เวลาลดลงเท่าไหร่ · ติดตรงไหน</span></div>
+  <aside class="notes">การบ้านคือแรงผลักให้ใช้จริง — งานที่เลือกต้อง "ทำซ้ำ" เพื่อวัดผลได้ (4 นาที)</aside>
+</section>
+
+<section class="slide cover">
+  <div class="kicker brand">YES! SCIENCE OF LEARNING AI TOOLS</div>
+  <h1>Q &amp; A</h1>
+  <div class="sub">ขอบคุณครับ — เจอกันสัปดาห์หน้า พร้อมผลการบ้าน<br><span style="font-size:40px">ชุดข้อมูลฝึก: github.com/Poom5741/zcode-cowork-demo</span></div>
+  <aside class="notes">เตรียมคำถามสำรองถ้าห้องเงียบ: "ใครมีงานที่อยากลองสั่ง AI สด ๆ ตอนนี้เลย?" (เปิด floor)</aside>
+</section>
+
+</div></div>
+<script>
+const slides=[...document.querySelectorAll('.slide')];let i=0;
+function show(n){i=Math.max(0,Math.min(n,slides.length-1));slides.forEach((s,k)=>s.classList.toggle('is-active',k===i));
+document.getElementById('bar').style.width=((i+1)/slides.length*100)+'%';
+document.getElementById('count').textContent=(i+1)+' / '+slides.length;}
+function fit(){const s=Math.min(innerWidth/1920,innerHeight/1080);document.getElementById('deck').style.transform='scale('+s+')';}
+addEventListener('resize',fit);fit();show(0);
+addEventListener('keydown',e=>{
+if(['ArrowRight','ArrowDown','PageDown',' '].includes(e.key)){e.preventDefault();show(i+1);}
+if(['ArrowLeft','ArrowUp','PageUp'].includes(e.key)){e.preventDefault();show(i-1);}
+if(e.key==='Home')show(0);if(e.key==='End')show(slides.length-1);
+if(e.key==='f'||e.key==='F'){document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen();}
+});
+document.getElementById('stage').addEventListener('click',e=>{show(e.clientX>innerWidth/2?i+1:i-1);});
+</script>
+</body>
+</html>
