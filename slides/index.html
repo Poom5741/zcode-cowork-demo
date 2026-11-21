@@ -14,8 +14,8 @@
 }
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{height:100%;background:var(--bg);color:var(--ink);font-family:'IBM Plex Sans Thai',system-ui,sans-serif;overflow:hidden}
-#stage{position:fixed;inset:0;display:flex;align-items:center;justify-content:center}
-.deck{width:1920px;height:1080px;transform-origin:center center;position:relative}
+#stage{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#050B14}
+.deck{width:1920px;height:1080px;transform-origin:center center;position:absolute;left:50%;top:50%}
 .slide{position:absolute;inset:0;display:none;flex-direction:column;padding:48px 120px;background:radial-gradient(1200px 800px at 75% 15%, #12233F 0%, var(--bg) 60%)}
 .slide.is-active{display:flex}
 /* type floors */
@@ -79,6 +79,7 @@ td.dim{font-size:38px}
 #bar{position:fixed;left:0;top:0;height:8px;background:var(--gold);z-index:99;transition:width .2s}
 #count{position:fixed;right:36px;bottom:28px;font-size:28px;color:var(--dim);z-index:99;font-family:'JetBrains Mono',monospace}
 #hint{position:fixed;left:36px;bottom:28px;font-size:26px;color:#3A557F;z-index:99}
+@media (max-width:760px){#hint{display:none}#count{font-size:18px;right:16px;bottom:12px}#bar{height:5px}}
 .notes{display:none}
 @media print{
   html,body{overflow:visible;background:#fff}
@@ -452,8 +453,9 @@ const slides=[...document.querySelectorAll('.slide')];let i=0;
 function show(n){i=Math.max(0,Math.min(n,slides.length-1));slides.forEach((s,k)=>s.classList.toggle('is-active',k===i));
 document.getElementById('bar').style.width=((i+1)/slides.length*100)+'%';
 document.getElementById('count').textContent=(i+1)+' / '+slides.length;}
-function fit(){const s=Math.min(innerWidth/1920,innerHeight/1080);document.getElementById('deck').style.transform='scale('+s+')';}
-addEventListener('resize',fit);fit();show(0);
+function fit(){const s=Math.min(innerWidth/1920,innerHeight/1080);
+document.getElementById('deck').style.transform='translate(-50%,-50%) scale('+s+')';}
+addEventListener('resize',fit);addEventListener('orientationchange',()=>setTimeout(fit,300));fit();show(0);
 addEventListener('keydown',e=>{
 if(['ArrowRight','ArrowDown','PageDown',' '].includes(e.key)){e.preventDefault();show(i+1);}
 if(['ArrowLeft','ArrowUp','PageUp'].includes(e.key)){e.preventDefault();show(i-1);}
@@ -461,6 +463,11 @@ if(e.key==='Home')show(0);if(e.key==='End')show(slides.length-1);
 if(e.key==='f'||e.key==='F'){document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen();}
 });
 document.getElementById('stage').addEventListener('click',e=>{show(e.clientX>innerWidth/2?i+1:i-1);});
+let tx=null,ty=null;
+addEventListener('touchstart',e=>{tx=e.touches[0].clientX;ty=e.touches[0].clientY;},{passive:true});
+addEventListener('touchend',e=>{if(tx===null)return;const dx=e.changedTouches[0].clientX-tx,dy=e.changedTouches[0].clientY-ty;
+if(Math.abs(dx)>45&&Math.abs(dx)>Math.abs(dy)*1.4){show(dx<0?i+1:i-1);}tx=null;},{passive:true});
+document.addEventListener('gesturestart',e=>e.preventDefault());
 </script>
 </body>
 </html>
